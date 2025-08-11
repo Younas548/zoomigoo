@@ -105,7 +105,7 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
 
                     try {
                       final response = await http.post(
-                        Uri.parse('http://YOUR_SERVER_IP:5000/api/auth/send-otp'),
+                        Uri.parse('http://localhost:8000/api/auth/send-otp'),
                         headers: {"Content-Type": "application/json"},
                         body: jsonEncode({"phoneNumber": fullPhoneNumber}),
                       );
