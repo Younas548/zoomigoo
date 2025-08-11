@@ -1,8 +1,12 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
+import 'package:http/http.dart' as http;
 
 class OtpScreen extends StatefulWidget {
-  const OtpScreen({super.key});
+  final String phoneNumber; // <-- Added this line
+
+  const OtpScreen({super.key, required this.phoneNumber}); // <-- Constructor updated
 
   @override
   State<OtpScreen> createState() => _OtpScreenState();
@@ -18,7 +22,7 @@ class _OtpScreenState extends State<OtpScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        leading: BackButton(color: Colors.black),
+        leading: const BackButton(color: Colors.black),
       ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 25),
@@ -84,9 +88,21 @@ class _OtpScreenState extends State<OtpScreen> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {
-                  // TODO: OTP verification logic
-                  print("OTP entered: $otpCode");
+                onPressed: () async {
+                  final response = await http.post(
+                    Uri.parse('http://YOUR_SERVER_IP:5000/api/auth/verify-otp'),
+                    headers: {"Content-Type": "application/json"},
+                    body: jsonEncode({
+                      "phoneNumber": widget.phoneNumber,
+                      "otp": otpCode
+                    }),
+                  );
+
+                  if (response.statusCode == 200) {
+                    print("OTP Verified");
+                  } else {
+                    print("Invalid OTP");
+                  }
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF008955),

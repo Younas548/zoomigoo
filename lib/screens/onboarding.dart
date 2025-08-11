@@ -65,7 +65,7 @@ class _OnboardingState extends State<Onboarding> {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => PhoneLoginScreen(),
+          builder: (context) => PhoneLoginScreen(phoneNumber: ''),
         ), // or any screen
       );
     }

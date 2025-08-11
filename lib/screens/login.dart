@@ -1,9 +1,12 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:intl_phone_number_input/intl_phone_number_input.dart';
 import 'package:zoomigooo/screens/otpscreen.dart';
 
 class PhoneLoginScreen extends StatefulWidget {
-  const PhoneLoginScreen({super.key});
+  final String phoneNumber;
+  const PhoneLoginScreen({Key? key, required this.phoneNumber}) : super(key: key);
 
   @override
   _PhoneLoginScreenState createState() => _PhoneLoginScreenState();
@@ -13,6 +16,7 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
   final TextEditingController controller = TextEditingController();
   String initialCountry = 'PK';
   PhoneNumber number = PhoneNumber(isoCode: 'PK');
+  String? fullPhoneNumber;
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +35,6 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
                   fontSize: 30,
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF008955),
-
                   letterSpacing: 1.1,
                 ),
               ),
@@ -58,7 +61,7 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
                 ),
                 child: InternationalPhoneNumberInput(
                   onInputChanged: (PhoneNumber number) {
-                    print(number.phoneNumber);
+                    fullPhoneNumber = number.phoneNumber; // save full number
                   },
                   selectorConfig: SelectorConfig(
                     selectorType: PhoneInputSelectorType.BOTTOM_SHEET,
@@ -88,18 +91,45 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 15),
                     backgroundColor: Color(0xFF008955),
-
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(25),
                     ),
                   ),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const OtpScreen(),
-                      ),
-                    );
+                  onPressed: () async {
+                    if (fullPhoneNumber == null || fullPhoneNumber!.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Please enter a valid number')),
+                      );
+                      return;
+                    }
+
+                    try {
+                      final response = await http.post(
+                        Uri.parse('http://YOUR_SERVER_IP:5000/api/auth/send-otp'),
+                        headers: {"Content-Type": "application/json"},
+                        body: jsonEncode({"phoneNumber": fullPhoneNumber}),
+                      );
+
+                      if (response.statusCode == 200) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                OtpScreen(phoneNumber: fullPhoneNumber!),
+                          ),
+                        );
+                      } else {
+                        print("Failed to send OTP: ${response.body}");
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Failed to send OTP')),
+                        );
+                      }
+                    } catch (e) {
+                      print("Error sending OTP: $e");
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Error sending OTP')),
+                      );
+                    }
                   },
                   child: const Text(
                     "Continue",
