@@ -6,7 +6,7 @@ import 'package:zoomigooo/screens/otpscreen.dart';
 
 class PhoneLoginScreen extends StatefulWidget {
   final String phoneNumber;
-  const PhoneLoginScreen({Key? key, required this.phoneNumber}) : super(key: key);
+  const PhoneLoginScreen({super.key, required this.phoneNumber});
 
   @override
   _PhoneLoginScreenState createState() => _PhoneLoginScreenState();
@@ -14,7 +14,6 @@ class PhoneLoginScreen extends StatefulWidget {
 
 class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
   final TextEditingController controller = TextEditingController();
-  String initialCountry = 'PK';
   PhoneNumber number = PhoneNumber(isoCode: 'PK');
   String? fullPhoneNumber;
 
@@ -61,16 +60,13 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
                 ),
                 child: InternationalPhoneNumberInput(
                   onInputChanged: (PhoneNumber number) {
-                    fullPhoneNumber = number.phoneNumber; // save full number
+                    fullPhoneNumber = number.phoneNumber; // Save full number with +92
                   },
                   selectorConfig: SelectorConfig(
                     selectorType: PhoneInputSelectorType.BOTTOM_SHEET,
                     setSelectorButtonAsPrefixIcon: true,
                     leadingPadding: 10,
                   ),
-                  ignoreBlank: false,
-                  autoValidateMode: AutovalidateMode.disabled,
-                  selectorTextStyle: const TextStyle(color: Colors.black),
                   initialValue: number,
                   textFieldController: controller,
                   formatInput: false,
@@ -80,7 +76,7 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
                   ),
                   inputDecoration: const InputDecoration(
                     border: InputBorder.none,
-                    hintText: '000 0000 000',
+                    hintText: '000 000 0000',
                   ),
                 ),
               ),
@@ -105,12 +101,14 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
 
                     try {
                       final response = await http.post(
-                        Uri.parse('http://localhost:8000/api/auth/send-otp'),
+                        Uri.parse('http://localhost:8000/api/auth/send-otp'), // ✅ Points to Twilio backend
                         headers: {"Content-Type": "application/json"},
-                        body: jsonEncode({"phoneNumber": fullPhoneNumber}),
+                        body: jsonEncode({"phone": fullPhoneNumber}),
                       );
 
-                      if (response.statusCode == 200) {
+                      final data = jsonDecode(response.body);
+
+                      if (response.statusCode == 200 && data['success'] == true) {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -121,7 +119,7 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
                       } else {
                         print("Failed to send OTP: ${response.body}");
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Failed to send OTP')),
+                          SnackBar(content: Text('Failed to send OTP: ${data['error'] ?? 'Unknown error'}')),
                         );
                       }
                     } catch (e) {
@@ -152,8 +150,7 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
                       style: TextStyle(color: Colors.blue),
                     ),
                     TextSpan(
-                      text:
-                          ' and consent to the processing of my personal information in accordance with the terms of the ',
+                      text: ' and consent to the processing of my personal information in accordance with the terms of the ',
                     ),
                     TextSpan(
                       text: 'Privacy Policy',
